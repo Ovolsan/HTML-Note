@@ -1,0 +1,91 @@
+/* Оформление содержимого документа. Используется и в редакторе, и в сохранённом HTML-файле. */
+.hn-doc {
+  --hn-text: #e6e6e9;
+  --hn-muted: #9a9ba3;
+  --hn-line: #34363c;
+  --hn-accent: #5aa9ff;
+  --hn-code-bg: #2a2c31;
+  --hn-quote: #2a3a4f;
+  color: var(--hn-text);
+  font: 16px/1.65 'Segoe UI', Arial, sans-serif;
+  overflow-wrap: break-word;
+}
+.hn-doc > :first-child { margin-top: 0; }
+.hn-doc h1, .hn-doc h2, .hn-doc h3, .hn-doc h4 { line-height: 1.25; font-weight: 650; margin: 1.6em 0 .55em; }
+.hn-doc h1 { font-size: 2.1em; letter-spacing: -.01em; }
+.hn-doc h2 { font-size: 1.6em; }
+.hn-doc h3 { font-size: 1.3em; }
+.hn-doc h4 { font-size: 1.1em; }
+.hn-doc p { margin: .55em 0 .9em; }
+.hn-doc a { color: var(--hn-accent); text-underline-offset: 3px; }
+.hn-doc ul, .hn-doc ol { padding-left: 1.6em; margin: .5em 0 1em; }
+.hn-doc li > p { margin: .2em 0; }
+.hn-doc blockquote { margin: 1.2em 0; padding: .6em 1.1em; border-left: 3px solid var(--hn-accent); background: var(--hn-quote); border-radius: 0; }
+.hn-doc code { background: var(--hn-code-bg); padding: .12em .4em; border-radius: 0; font: .9em Consolas, 'Cascadia Mono', monospace; }
+.hn-doc pre { background: var(--hn-code-bg); padding: 14px 16px; border-radius: 0; overflow-x: auto; }
+.hn-doc pre code { background: none; padding: 0; font-size: .88em; }
+.hn-doc hr { border: 0; border-top: 1px solid var(--hn-line); margin: 2em 0; }
+.hn-doc mark { color: inherit; border-radius: 0; padding: 0 .1em; }
+
+/* Картинки: ширина и выравнивание задаются атрибутами data-width / data-align. */
+.hn-doc img { display: block; max-width: 100%; height: auto; margin: 1em auto; border-radius: 0; cursor: zoom-in; }
+.hn-doc img[data-align="left"] { margin-left: 0; }
+.hn-doc img[data-align="right"] { margin-right: 0; }
+/* Обтекание «вокруг рамки»: картинка прижата к краю, текст идёт рядом. Заголовки и линии начинаются под ней. */
+.hn-doc img[data-wrap="left"] { float: left; margin: .35em 1.4em .8em 0; }
+.hn-doc img[data-wrap="right"] { float: right; margin: .35em 0 .8em 1.4em; }
+.hn-doc h1, .hn-doc h2, .hn-doc h3, .hn-doc h4, .hn-doc hr, .hn-doc table, .hn-doc .hn-video, .hn-doc .hn-spoiler { clear: both; }
+/* Листы на холсте (hnFrame) и блоки внутри них (hnBlock). Оформление у них общее. */
+.hn-doc .hn-frame { position: absolute; box-sizing: border-box; border: 1px solid transparent; min-width: 0; }
+.hn-doc .hn-frame::after { content: ''; display: block; clear: both; }
+.hn-doc .hn-block { margin: 1em 0; border: 1px solid transparent; min-width: 0; box-sizing: border-box; max-width: 100%; }
+.hn-doc :is(.hn-frame, .hn-block)[data-border="line"] { border-color: var(--hn-line); }
+.hn-doc :is(.hn-frame, .hn-block)[data-border="accent"] { border-color: var(--hn-line); border-left: 3px solid var(--hn-accent); }
+.hn-doc :is(.hn-frame, .hn-block)[data-pad="none"] { padding: 0; }
+.hn-doc :is(.hn-frame, .hn-block)[data-pad="s"] { padding: 10px 14px; }
+.hn-doc :is(.hn-frame, .hn-block)[data-pad="m"] { padding: 22px 26px; }
+.hn-doc :is(.hn-frame, .hn-block)[data-pad="l"] { padding: 34px 38px; }
+.hn-doc :is(.hn-frame, .hn-block)[data-pad="xl"] { padding: 56px 64px; }
+.hn-doc :is(.hn-frame, .hn-block, .hn-frame-content, .hn-block-content) > :first-child { margin-top: 0; }
+.hn-doc :is(.hn-frame, .hn-block, .hn-frame-content, .hn-block-content) > :last-child { margin-bottom: 0; }
+.hn-doc :is(.hn-frame-content, .hn-block-content).fixed { height: 100%; overflow-y: auto; }
+.hn-doc .hn-row { display: flex; gap: 18px; margin: 1em 0; clear: both; }
+.hn-doc .hn-row > .hn-block { flex: 1 1 0; margin: 0; }
+@media (max-width: 700px) { .hn-doc .hn-row { flex-direction: column; } .hn-doc .hn-row > .hn-block { width: auto !important; } }
+
+/* Пользовательские и стандартные эмодзи в строке текста. */
+.hn-doc img.hn-emoji { display: inline-block; width: auto; height: 1.35em; margin: 0 .05em; vertical-align: -.3em; cursor: default; float: none; }
+
+/* Видео: файл или встроенный плеер (YouTube, Vimeo). */
+.hn-doc .hn-video { margin: 1.2em auto; max-width: 100%; }
+.hn-doc .hn-video video { display: block; width: 100%; border-radius: 0; background: #000; }
+.hn-doc .hn-video.embed .hn-video-frame { position: relative; padding-top: 56.25%; }
+.hn-doc .hn-video.embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 0; background: #000; }
+.hn-doc .hn-video-link { display: block; font-size: .85em; color: var(--hn-muted); margin-top: .35em; }
+
+/* Кнопки-ссылки. */
+.hn-doc .hn-button { display: inline-block; padding: .45em 1.15em; margin: .15em .25em .15em 0; border-radius: 0; border: 1px solid var(--hn-accent); background: var(--hn-accent); color: #0b1320; font-weight: 600; text-decoration: none; line-height: 1.4; }
+.hn-doc .hn-button.outline { background: transparent; color: var(--hn-accent); }
+.hn-doc .hn-button:hover { filter: brightness(1.12); }
+
+/* Спойлеры. В файле — <details>, в редакторе — div с теми же классами. */
+.hn-doc .hn-spoiler { margin: 1em 0; border: 1px solid var(--hn-line); border-radius: 0; background: #25262b; }
+.hn-doc .hn-spoiler-summary { padding: .6em 1em; font-weight: 600; cursor: pointer; list-style: none; }
+.hn-doc .hn-spoiler-summary::-webkit-details-marker { display: none; }
+.hn-doc .hn-spoiler-summary::before { content: '▸'; display: inline-block; width: 1.1em; color: var(--hn-accent); transition: transform .15s; }
+.hn-doc details[open] > .hn-spoiler-summary::before, .hn-doc div.hn-spoiler > .hn-spoiler-summary::before { transform: rotate(90deg); }
+.hn-doc .hn-spoiler-body { padding: .1em 1em .5em 2.1em; border-top: 1px solid var(--hn-line); }
+
+/* Таблицы. */
+.hn-doc table { border-collapse: collapse; width: 100%; margin: 1.2em 0; table-layout: fixed; }
+.hn-doc th, .hn-doc td { border: 1px solid var(--hn-line); padding: .5em .7em; vertical-align: top; position: relative; }
+.hn-doc th { background: #2a2c31; text-align: left; font-weight: 600; }
+.hn-doc td > p, .hn-doc th > p { margin: 0; }
+
+/* Списки задач. */
+.hn-doc ul[data-type="taskList"] { list-style: none; padding-left: .3em; }
+.hn-doc ul[data-type="taskList"] li { display: flex; gap: .55em; align-items: flex-start; }
+.hn-doc ul[data-type="taskList"] li > label { margin-top: .3em; }
+.hn-doc ul[data-type="taskList"] li > div { flex: 1; }
+.hn-doc ul[data-type="taskList"] li[data-checked="true"] > div { color: var(--hn-muted); text-decoration: line-through; }
+.hn-doc input[type="checkbox"] { accent-color: var(--hn-accent); width: 1em; height: 1em; }

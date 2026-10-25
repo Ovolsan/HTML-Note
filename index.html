@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>HTML Note</title>
+</head>
+<body>
+  <div class="app">
+    <header class="filebar">
+      <div class="brand">HTML Note</div>
+      <nav class="file-actions zone" id="file-zone" aria-label="Файл"></nav>
+      <div class="doc-name" id="doc-name">Новый документ</div>
+    </header>
+    <div class="toolbar zone collapsible" id="toolbar" role="toolbar" aria-label="Верхняя панель" data-label="Верхняя панель — перетащите сюда кнопки"></div>
+    <div class="workspace">
+      <aside class="sidebar" id="sidebar"></aside>
+      <main class="canvas" id="canvas">
+        <div class="sheet hn-doc" id="editor"></div>
+      </main>
+      <aside class="rightbar zone collapsible" id="rightbar" aria-label="Правая панель" data-label="Правая панель"></aside>
+    </div>
+    <div class="toolbar bottombar zone collapsible" id="toolbar-bottom" role="toolbar" aria-label="Нижняя панель" data-label="Нижняя панель — перетащите сюда кнопки"></div>
+    <div class="ctxbar" id="ctxbar" hidden></div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
