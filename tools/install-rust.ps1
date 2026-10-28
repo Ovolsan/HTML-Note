@@ -1,6 +1,6 @@
 ﻿# HTML Note: установка Rust и инструментов сборки C++ для Tauri.
-# Запускайте двойным щелчком по install-rust.cmd, а не из Claude: так PATH и переменные среды
-# попадут в систему, а не в изолированную среду приложения Claude.
+# Запускайте двойным щелчком по install-rust.cmd из Проводника: так PATH и переменные среды
+# попадут в систему, а не в изолированную среду другой программы.
 $ErrorActionPreference = 'Stop'
 $log = Join-Path $PSScriptRoot 'install-rust.log'
 Start-Transcript -Path $log -Force | Out-Null
@@ -48,7 +48,7 @@ try {
     & "$env:CARGO_HOME\bin\cargo.exe" --version
     $msvc = & $vswhere -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
     Write-Host "MSVC: $msvc"
-    Write-Host "`nГОТОВО. Можно закрыть окно и написать Claude." -ForegroundColor Green
+    Write-Host "`nГОТОВО. Можно закрыть окно." -ForegroundColor Green
 }
 catch {
     Write-Host "`nОШИБКА: $($_.Exception.Message)" -ForegroundColor Red
