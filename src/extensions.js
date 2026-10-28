@@ -127,25 +127,20 @@ export const HnImage = Image.extend({
   },
 }).configure({ allowBase64: true, inline: false });
 
-/** Превращает ссылку YouTube/Vimeo в адрес встроенного плеера; для прочих ссылок возвращает null. */
-export function embedUrl(url) {
-  const yt = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/i);
-  if (yt) return { src: `https://www.youtube.com/embed/${yt[1]}`, page: `https://www.youtube.com/watch?v=${yt[1]}` };
+/**
+ * Ссылка YouTube/Vimeo → { page, site } со страницей ролика; для прочих ссылок null.
+ * Встроенный плеер этих сайтов не играет в файле, открытом с диска (ошибка 153), поэтому такие видео вставляются ссылкой.
+ */
+export function videoPage(url) {
+  const yt = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/i);
+  if (yt) return { page: `https://www.youtube.com/watch?v=${yt[1]}`, site: 'YouTube' };
   const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
-  if (vm) return { src: `https://player.vimeo.com/video/${vm[1]}`, page: `https://vimeo.com/${vm[1]}` };
+  if (vm) return { page: `https://vimeo.com/${vm[1]}`, site: 'Vimeo' };
   return null;
 }
 
 function videoDom(attrs) {
   const style = `width: ${attrs.width || '100%'}`;
-  if (attrs.kind === 'embed') {
-    const children = [['div', { class: 'hn-video-frame' }, ['iframe', {
-      src: attrs.src, allowfullscreen: 'true', referrerpolicy: 'strict-origin-when-cross-origin',
-      allow: 'autoplay; encrypted-media; picture-in-picture; fullscreen',
-    }]]];
-    if (attrs.page) children.push(['a', { class: 'hn-video-link', href: attrs.page, target: '_blank', rel: 'noopener' }, 'Открыть видео на сайте ↗']);
-    return ['div', { class: 'hn-video embed', style, 'data-type': 'video' }, ...children];
-  }
   return ['div', { class: 'hn-video', style, 'data-type': 'video' }, ['video', { src: attrs.src, controls: 'true', preload: 'metadata' }]];
 }
 
@@ -157,30 +152,19 @@ export const Video = Node.create({
   addAttributes() {
     return {
       src: { default: null, rendered: false },
-      kind: { default: 'file', rendered: false },
-      page: { default: null, rendered: false },
       width: { default: '100%', rendered: false },
     };
   },
   parseHTML() {
+    // Встроенные плееры YouTube/Vimeo сюда не доходят: parseHtml заранее заменяет их ссылками.
     const fromWrapper = (el) => {
-      const media = el.querySelector('video, iframe');
+      const media = el.querySelector('video');
       if (!media) return false;
-      const isFrame = media.tagName === 'IFRAME';
-      return {
-        src: media.getAttribute('src'),
-        kind: isFrame ? 'embed' : 'file',
-        page: el.querySelector('.hn-video-link')?.getAttribute('href') || null,
-        width: el.style.width || '100%',
-      };
+      return { src: media.getAttribute('src') || media.querySelector('source')?.getAttribute('src'), width: el.style.width || '100%' };
     };
     return [
       { tag: 'div.hn-video', getAttrs: fromWrapper },
-      { tag: 'video', getAttrs: (el) => ({ src: el.getAttribute('src') || el.querySelector('source')?.getAttribute('src'), kind: 'file' }) },
-      { tag: 'iframe', getAttrs: (el) => {
-        const src = el.getAttribute('src') || '';
-        return /youtube|vimeo/i.test(src) ? { src, kind: 'embed' } : false;
-      } },
+      { tag: 'video', getAttrs: (el) => ({ src: el.getAttribute('src') || el.querySelector('source')?.getAttribute('src') }) },
     ];
   },
   renderHTML({ node }) {
@@ -193,7 +177,7 @@ export const Video = Node.create({
       wrap.className = 'hn-node-wrap';
       const grip = document.createElement('div');
       grip.className = 'hn-node-grip';
-      grip.textContent = node.attrs.kind === 'embed' ? 'Видео по ссылке' : 'Видео';
+      grip.textContent = 'Видео';
       grip.setAttribute('data-drag-handle', '');
       wrap.append(grip, renderSpec(videoDom(node.attrs)));
       return { dom: wrap };

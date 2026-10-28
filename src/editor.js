@@ -98,7 +98,7 @@ export async function insertMediaFiles(editor, files, pos) {
     }
     const src = await readAsDataUrl(file);
     const node = isVideo
-      ? { type: 'video', attrs: { src, kind: 'file' } }
+      ? { type: 'video', attrs: { src } }
       : { type: 'image', attrs: { src, alt: file.name.replace(/\.[^.]+$/, '') } };
     if (typeof pos === 'number') editor.chain().focus().insertContentAt(pos, node).run();
     else editor.chain().focus().insertContent(node).run();

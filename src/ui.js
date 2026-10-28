@@ -4,6 +4,7 @@ import {
   AlignRight, AlignJustify, List, ListOrdered, ListTodo, Quote, CodeXml, Image, Clapperboard, Table, MousePointerClick,
   ChevronsDownUp, Minus, RemoveFormatting, Type, Replace, Trash2, Pencil, BetweenHorizontalEnd, BetweenVerticalEnd, Rows3,
   Columns3, Heading, TableCellsMerge, FilePlus, FolderOpen, Save, SaveAll, Globe, PanelLeft, Smile, Clock, Plus, Settings2,
+  Square, Copy, X, ChevronDown, RefreshCw,
 } from 'lucide';
 
 // Только используемые значки, чтобы не тащить в программу всю библиотеку.
@@ -11,7 +12,7 @@ const icons = {
   Undo2, Redo2, Bold, Italic, Underline, Strikethrough, Baseline, Highlighter, Link, AlignLeft, AlignCenter, AlignRight,
   AlignJustify, List, ListOrdered, ListTodo, Quote, CodeXml, Image, Clapperboard, Table, MousePointerClick, ChevronsDownUp,
   Minus, RemoveFormatting, Type, Replace, Trash2, Pencil, BetweenHorizontalEnd, BetweenVerticalEnd, Rows3, Columns3, Heading,
-  TableCellsMerge, FilePlus, FolderOpen, Save, SaveAll, Globe, PanelLeft, Smile, Clock, Plus, Settings2,
+  TableCellsMerge, FilePlus, FolderOpen, Save, SaveAll, Globe, PanelLeft, Smile, Clock, Plus, Settings2, Square, Copy, X, ChevronDown, RefreshCw,
 };
 
 export function icon(name, size = 18) {
@@ -78,6 +79,21 @@ export function popover(anchor, content) {
     document.addEventListener('mousedown', onDown, true);
   });
   return box;
+}
+
+let openMenu = null;
+const closeMenu = () => { openMenu?.remove(); openMenu = null; };
+document.addEventListener('mousedown', (e) => { if (openMenu && !openMenu.contains(e.target)) closeMenu(); }, true);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+/** Контекстное меню в точке события e. items: [{ label, onClick }]. */
+export function contextMenu(e, items) {
+  e.preventDefault();
+  closeMenu();
+  openMenu = el('div', { class: 'ctx-menu', role: 'menu' },
+    items.map((it) => el('button', { class: 'ctx-item', type: 'button', onClick: () => { closeMenu(); it.onClick(); } }, it.label)));
+  document.body.append(openMenu);
+  openMenu.style.left = `${Math.min(e.clientX, window.innerWidth - openMenu.offsetWidth - 8)}px`;
+  openMenu.style.top = `${Math.min(e.clientY, window.innerHeight - openMenu.offsetHeight - 8)}px`;
 }
 
 /**

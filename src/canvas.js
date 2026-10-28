@@ -3,6 +3,7 @@
 import { Node, Extension } from '@tiptap/core';
 import Document from '@tiptap/extension-document';
 import { Plugin, TextSelection } from '@tiptap/pm/state';
+import { getDefaults } from './defaults.js';
 
 export const CanvasDocument = Document.extend({ content: 'hnFrame+' });
 
@@ -42,18 +43,44 @@ function dragPointer(e, onMove, onDone) {
   // Нажатие не отменяем: иначе браузер не пришлёт mousedown, который гасит handle(),
   // и редактор потеряет фокус — а при потере фокуса лист перерисовывается и ручка пропадает.
   e.stopPropagation();
+  if (e.button > 0) return;
   const sx = e.clientX;
   const sy = e.clientY;
-  const move = (ev) => onMove(ev.clientX - sx, ev.clientY - sy, ev);
+  let last = e;
+  // Перерисовываем не чаще кадра экрана: движений приходит больше, чем браузер успевает отрисовать.
+  let frame = 0;
+  const move = (ev) => {
+    if (ev.pointerId !== e.pointerId) return;
+    last = ev;
+    if (!frame) frame = requestAnimationFrame(() => { frame = 0; onMove(last.clientX - sx, last.clientY - sy, last); });
+  };
   const up = (ev) => {
+    if (ev.pointerId !== e.pointerId) return;
+    cancelAnimationFrame(frame);
     document.removeEventListener('pointermove', move);
     document.removeEventListener('pointerup', up);
+    document.removeEventListener('pointercancel', up);
     document.body.classList.remove('hn-dragging');
-    onDone(ev.clientX - sx, ev.clientY - sy, ev);
+    // pointercancel приходит без координат движения — берём последнюю известную точку.
+    const end = ev.type === 'pointercancel' ? last : ev;
+    onDone(end.clientX - sx, end.clientY - sy, end);
   };
+  // Захват указателя: палец или мышь не «теряют» ручку, даже если ушли с неё быстрее перерисовки.
+  try { e.target.setPointerCapture?.(e.pointerId); } catch { /* элемент уже убран */ }
   document.body.classList.add('hn-dragging');
   document.addEventListener('pointermove', move);
   document.addEventListener('pointerup', up);
+  document.addEventListener('pointercancel', up);
+}
+
+/**
+ * Изменения, которые узел делает сам (стили и классы рамки, ручек и самой области содержимого),
+ * редактор не должен принимать за правку текста — иначе он перерисует всё содержимое, вместе с видео.
+ */
+function ignoreOwnMutation(m, content) {
+  if (m.type === 'selection') return false;
+  if (m.type === 'attributes' && m.target === content) return true;
+  return !content.contains(m.target);
 }
 
 /** Элемент-ручка: нажатие на него не забирает фокус у редактора и не начинает выделение текста. */
@@ -174,14 +201,16 @@ export const HnFrame = Node.create({
           w: horiz ? Math.max(160, w0 + dx) : n.attrs.w,
           height: vert ? Math.max(80, h0 + dy) : n.attrs.height,
         });
+        if (vert) content.classList.add('fixed');
         dragNode(e, editor, getPos, dom, (d, n, dx, dy) => {
           const s = calc(n, dx, dy);
           d.style.width = `${s.w}px`;
-          if (vert) {
-            d.style.height = `${s.height}px`;
-            d.querySelector(':scope > .hn-frame-content')?.classList.add('fixed');
-          }
+          if (vert) d.style.height = `${s.height}px`;
         }, (d, n, dx, dy) => {
+          if (!dx && !dy) { // щелчок без движения — ничего не меняем
+            content.classList.toggle('fixed', !!cur.attrs.height);
+            return null;
+          }
           const s = calc(n, dx, dy);
           return { w: snap(s.w), height: vert ? snap(s.height) : n.attrs.height };
         });
@@ -201,7 +230,7 @@ export const HnFrame = Node.create({
           return true;
         },
         stopEvent: (e) => e.target === bar || e.target.classList?.contains('hn-handle'),
-        ignoreMutation: (m) => m.type !== 'selection' && !content.contains(m.target),
+        ignoreMutation: (m) => ignoreOwnMutation(m, content),
       };
     };
   },
@@ -220,7 +249,7 @@ export const HnFrame = Node.create({
           y = top;
         }
         const frame = state.schema.nodes.hnFrame.create(
-          { w: 420, pad: 'm', bg: '#26282d', border: 'line', ...attrs, x: snap(x), y: snap(y) },
+          { w: 420, pad: 'm', bg: '#26282d', border: 'line', ...getDefaults('frame'), ...attrs, x: snap(x), y: snap(y) },
           state.schema.nodes.paragraph.create(),
         );
         if (dispatch) {
@@ -299,11 +328,15 @@ export const HnBlock = Node.create({
       hb.addEventListener('pointerdown', (e) => {
         const h0 = dom.offsetHeight;
         let h = null;
+        content.classList.add('fixed');
         dragNode(e, editor, getPos, dom, (d, n, dx, dy) => {
           h = Math.max(60, h0 + dy);
           d.style.height = `${h}px`;
-          d.querySelector(':scope > .hn-block-content')?.classList.add('fixed');
-        }, () => (h ? { height: snap(h) } : null));
+        }, () => {
+          if (h) return { height: snap(h) };
+          content.classList.toggle('fixed', !!cur.attrs.height); // щелчок без движения — как было
+          return null;
+        });
       });
       hr.addEventListener('dblclick', () => setAttrs(editor, getPos, { width: null }, 'hnBlock'));
       hb.addEventListener('dblclick', () => setAttrs(editor, getPos, { height: null }, 'hnBlock'));
@@ -323,7 +356,7 @@ export const HnBlock = Node.create({
           return true;
         },
         stopEvent: (e) => e.target === grip || e.target === dom || e.target.classList?.contains('hn-handle'),
-        ignoreMutation: (m) => m.type !== 'selection' && !content.contains(m.target),
+        ignoreMutation: (m) => ignoreOwnMutation(m, content),
       };
     };
   },

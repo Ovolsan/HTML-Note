@@ -1,6 +1,6 @@
 [package]
 name = "html-note"
-version = "0.1.0"
+version = "2026.10.28"
 description = "HTML Note — редактор HTML-документов"
 edition = "2021"
 
@@ -14,6 +14,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
+tauri-plugin-window-state = "2"
 
 [profile.release]
 codegen-units = 1

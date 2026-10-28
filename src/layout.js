@@ -4,7 +4,7 @@ import { el } from './ui.js';
 
 const KEY = 'hn-layout-v1';
 export const DEFAULT_LAYOUT = {
-  file: ['undo', 'redo', '|', 'new', 'open', 'save', 'saveAs', 'browser'],
+  file: ['undo', 'redo', '|', 'new', 'open', 'save', 'saveAs', 'browser', 'update'],
   top: ['style', 'font', 'size', '|', 'bold', 'italic', 'underline', 'strike', 'color', 'mark', '|', 'link', '|',
     'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', '|', 'bullet', 'ordered', 'task', 'quote', 'code'],
   side: ['emoji', 'image', 'video', 'table', 'button', 'spoiler', 'hr', 'clear'],
@@ -48,8 +48,13 @@ export function setupLayout(tools, zones) {
       }
       zones[z].replaceChildren(...items);
     }
-    // Новые инструменты, которых не было в сохранённом расположении, попадают на левую панель.
-    for (const [id, t] of tools) if (!placed.has(id)) zones.side.append(t);
+    // Новые инструменты, которых не было в сохранённом расположении, встают на своё стандартное место
+    // (или на левую панель, если его нет).
+    for (const [id, t] of tools) {
+      if (placed.has(id)) continue;
+      const home = ZONES.find((z) => DEFAULT_LAYOUT[z].includes(id)) || 'side';
+      zones[home].append(t);
+    }
     markEmpty();
   }
 

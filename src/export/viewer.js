@@ -50,13 +50,12 @@
     window.addEventListener('resize', fit);
     if ('ResizeObserver' in window) new ResizeObserver(fit).observe(canvas.parentElement);
   }
-  // Кнопка «Скрыть / Показать содержание»; выбор запоминается в этом браузере.
+  // Кнопка-значок «Содержание» прячет и показывает содержание; выбор запоминается в этом браузере.
   var toggle = document.querySelector('.hn-toc-toggle');
   if (toggle) {
     var key = 'hn-toc-hidden:' + location.pathname;
     var setHidden = function (hidden) {
       document.body.classList.toggle('toc-hidden', hidden);
-      toggle.textContent = hidden ? 'Показать содержание' : 'Скрыть содержание';
       toggle.setAttribute('aria-expanded', hidden ? 'false' : 'true');
     };
     var saved = null;

@@ -52,6 +52,15 @@ body.sidebar-collapsed .sidebar { padding: 8px 4px; }
 .drag-ghost { position: fixed; z-index: 100; pointer-events: none; opacity: .9; background: #2b3b52; box-shadow: 0 6px 20px #000a; }
 body:has(.drag-ghost) { cursor: grabbing; }
 .doc-name { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+/* Своя рамка окна (в программе): строка файла — заголовок окна, справа кнопки окна во всю высоту строки. */
+.custom-frame .filebar { padding: 0 0 0 12px; min-height: 40px; user-select: none; }
+.custom-frame .doc-name { flex: 1 1 auto; }
+.win-controls { display: flex; align-self: stretch; margin-left: auto; }
+.win-btn { width: 46px; border: 0; border-radius: 0; background: transparent; color: var(--muted); display: flex; align-items: center; justify-content: center; cursor: default; }
+.win-btn:hover { background: var(--btn-hover); color: var(--text); }
+.win-btn.close:hover { background: #c42b1c; color: #fff; }
+.win-btn svg { stroke-width: 1.5; }
+.win-btn.max svg { width: 13px; height: 13px; }
 
 /* Панель форматирования. */
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px 10px; background: var(--chrome-2); border-bottom: 1px solid var(--line); }
@@ -119,6 +128,21 @@ body.sidebar-collapsed .side-head span { display: none; }
 :is(.hn-frame, .hn-block):hover > .hn-handle { opacity: 1; }
 :is(.hn-frame, .hn-block):hover > .hn-handle.r, :is(.hn-frame, .hn-block):hover > .hn-handle.b { background: #5aa9ff55; }
 .hn-dragging, .hn-dragging * { user-select: none !important; }
+/* Палец на ручке тянет её, а не прокручивает страницу. */
+.hn-frame-bar, .hn-block-grip, .hn-handle, .hn-node-grip { touch-action: none; -webkit-touch-callout: none; }
+/* Управление пальцем (класс hn-touch ставит main.js после касания): наведения нет,
+   поэтому ручки видны у листа и блока с курсором, и они крупнее под палец. */
+.hn-touch .hn-frame-bar { height: 34px; line-height: 34px; top: -36px; padding: 0 16px; font-size: 18px; }
+.hn-touch .hn-frame.bar-inside > .hn-frame-bar { top: 0; }
+.hn-touch .hn-block-grip { width: 30px; height: 30px; line-height: 30px; font-size: 16px; }
+.hn-touch .hn-handle.r { right: -12px; width: 24px; }
+.hn-touch .hn-handle.b { bottom: -12px; height: 24px; }
+.hn-touch .hn-handle.br { right: -14px; bottom: -14px; width: 28px; height: 28px; }
+.hn-touch .hn-block > .hn-handle.r { right: 0; width: 20px; }
+.hn-touch .hn-block > .hn-handle.b { bottom: 0; height: 20px; }
+.hn-touch .hn-frame > .hn-frame-bar { opacity: 1; }
+.hn-touch :is(.hn-frame, .hn-block.hn-block-active) > .hn-handle { opacity: 1; }
+.hn-touch :is(.hn-frame, .hn-block.hn-block-active) > :is(.hn-handle.r, .hn-handle.b) { background: #5aa9ff40; }
 .hn-moving { opacity: .45; }
 .hn-drop-line { position: fixed; z-index: 90; background: var(--accent); pointer-events: none; display: none; }
 .hn-drop-ghost { position: fixed; z-index: 91; pointer-events: none; background: #2b3b52; color: #cfe4ff; font-size: 12px; padding: 4px 8px; box-shadow: 0 6px 18px #000a; }
@@ -163,6 +187,12 @@ body.sidebar-collapsed .side-head span { display: none; }
 .pos-field { display: grid; gap: 3px; font-size: 11.5px; color: var(--muted); flex: 1; min-width: 0; }
 .pos-field .num { width: 100%; }
 .side-title { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin: 2px 0 8px; }
+/* Сворачиваемый раздел: заголовок-кнопка со стрелкой, содержимое прячется. */
+.side-fold-title { display: flex; align-items: center; gap: 4px; width: 100%; padding: 2px 0; border: 0; background: transparent; cursor: pointer; text-align: left; }
+.side-fold-title:hover { color: var(--text); }
+.side-fold-title svg { flex: none; transition: transform .12s; }
+.side-fold-title.folded svg { transform: rotate(-90deg); }
+.side-fold-title.folded + .side-fold { display: none; }
 .side-subtitle { font-weight: 600; margin: 14px 0 6px; }
 .sbtn-row { display: flex; gap: 4px; margin: 6px 0; }
 .sbtn-row.wrap { flex-wrap: wrap; }
@@ -223,17 +253,18 @@ body.sidebar-collapsed .side-head span { display: none; }
 .btn:hover { background: #33353b; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #0b1320; font-weight: 600; }
 .btn.small { height: 26px; padding: 0 10px; font-size: 12.5px; }
-.hn-dialog { background: #1f2024; color: var(--text); border: 1px solid #3a3c42; border-radius: 0; padding: 20px 22px; width: min(460px, 92vw); box-shadow: 0 20px 60px #000a; }
+.hn-dialog { background: #1f2024; color: var(--text); border: 1px solid #3a3c42; border-radius: 0; padding: 20px 22px; width: min(520px, 92vw); box-shadow: 0 20px 60px #000a; }
 .hn-dialog::backdrop { background: #0009; }
 .hn-dialog h3 { margin: 0 0 14px; font-size: 17px; }
-.dialog-text { color: #c9cad1; margin: 0 0 16px; }
+.dialog-text { color: #c9cad1; margin: 0 0 16px; white-space: pre-line; max-height: 50vh; overflow: auto; }
 .field { display: grid; gap: 6px; margin-bottom: 14px; }
 .field-label { font-size: 12.5px; color: var(--muted); }
 .field-hint { font-size: 12px; color: #7d7f88; }
 .field input, .field select { height: 34px; background: #16171a; border: 1px solid #3a3c42; border-radius: 0; padding: 0 10px; }
 .field input[type="file"] { padding: 5px 8px; height: auto; }
 .field input:focus, .field select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
-.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.dialog-actions .btn { white-space: nowrap; }
 .toasts { position: fixed; right: 16px; bottom: 16px; display: grid; gap: 8px; z-index: 40; max-width: 420px; }
 .toast { background: #26282d; border: 1px solid #3a3c42; border-left: 3px solid var(--accent); border-radius: 0; padding: 10px 14px; box-shadow: 0 6px 20px #0008; }
 .toast.ok { border-left-color: #51cf66; }

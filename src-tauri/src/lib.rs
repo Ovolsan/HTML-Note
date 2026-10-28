@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
+use tauri_plugin_window_state::StateFlags;
 
 /// Читает документ с диска.
 #[tauri::command]
@@ -53,6 +54,13 @@ fn open_path(path: String) -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        // Запоминает размер, положение и развёрнутость окна между запусками.
+        // Рамку не запоминает: она своя (decorations: false) и не должна возвращаться из старого сохранения.
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(StateFlags::all() & !StateFlags::DECORATIONS & !StateFlags::VISIBLE)
+                .build(),
+        )
         .invoke_handler(tauri::generate_handler![
             read_file,
             write_file,

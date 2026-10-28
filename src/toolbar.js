@@ -1,7 +1,7 @@
 // Верхняя панель форматирования в стиле Google Документов.
 import { el, icon, toolButton, popover, closePopover, formDialog, toast, readAsDataUrl } from './ui.js';
 import { insertMediaFiles } from './editor.js';
-import { embedUrl } from './extensions.js';
+import { videoPage } from './extensions.js';
 import { openEmojiPicker } from './emoji.js';
 
 const FONTS = [
@@ -97,7 +97,7 @@ export function buildTools(editor) {
   add('clear', { iconName: 'RemoveFormatting', short: 'Очистить', label: 'Очистить форматирование', onClick: () => chain().unsetAllMarks().clearNodes().run() });
   add('emoji', { iconName: 'Smile', short: 'Эмодзи', label: 'Эмодзи: свои и стандартные; можно набрать :имя:', onClick: (b) => openEmojiPicker(b, editor) });
   add('image', { iconName: 'Image', short: 'Картинка', label: 'Картинка (можно вставить через Ctrl+V или перетащить)', onClick: () => pickImages(editor) });
-  add('video', { iconName: 'Clapperboard', short: 'Видео', label: 'Видео: файл или ссылка на YouTube, Vimeo, .mp4', onClick: () => insertVideo(editor) });
+  add('video', { iconName: 'Clapperboard', short: 'Видео', label: 'Видео: файл или прямая ссылка на .mp4', onClick: () => insertVideo(editor) });
   add('table', { iconName: 'Table', short: 'Таблица', label: 'Таблица 3×3', onClick: () => chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() });
   add('button', { iconName: 'MousePointerClick', short: 'Кнопка', label: 'Кнопка-ссылка', onClick: () => editButton(editor) });
   add('spoiler', { iconName: 'ChevronsDownUp', short: 'Спойлер', label: 'Спойлер (сворачиваемый блок)', onClick: () => chain().setSpoiler().run() });
@@ -149,7 +149,7 @@ export async function insertVideo(editor) {
   const v = await formDialog({
     title: 'Вставить видео',
     fields: [
-      { name: 'url', label: 'Ссылка на видео', type: 'url', placeholder: 'YouTube, Vimeo или прямая ссылка на .mp4', hint: 'Или выберите файл ниже — он будет встроен в документ.' },
+      { name: 'url', label: 'Ссылка на видео', type: 'url', placeholder: 'Прямая ссылка на .mp4 или .webm', hint: 'Или выберите файл ниже — он будет встроен в документ.' },
       { name: 'file', label: 'Файл с компьютера', type: 'file', accept: 'video/*' },
     ],
     okText: 'Вставить',
@@ -157,9 +157,12 @@ export async function insertVideo(editor) {
   if (!v) return editor.commands.focus();
   if (v.file) return insertMediaFiles(editor, [v.file]);
   if (!v.url) return toast('Укажите ссылку или выберите файл.', 'warn');
-  const emb = embedUrl(v.url);
-  if (emb) return editor.chain().focus().setVideo({ src: emb.src, page: emb.page, kind: 'embed' }).run();
-  return editor.chain().focus().setVideo({ src: v.url, kind: 'file' }).run();
+  const site = videoPage(v.url);
+  if (site) {
+    toast(`Видео с ${site.site} вставлено ссылкой: его плеер не играет в файле, открытом с диска.`);
+    return editor.chain().focus().insertContent(`<p><a href="${site.page}">Видео на ${site.site} ↗</a></p>`).run();
+  }
+  return editor.chain().focus().setVideo({ src: v.url }).run();
 }
 
 export async function editButton(editor, existing) {

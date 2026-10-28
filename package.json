@@ -2,7 +2,7 @@
   "name": "html-note",
   "private": true,
   "license": "GPL-3.0-only",
-  "version": "0.1.0",
+  "version": "2026.10.28",
   "description": "HTML Note — редактор HTML-документов в стиле Google Документов",
   "type": "module",
   "scripts": {

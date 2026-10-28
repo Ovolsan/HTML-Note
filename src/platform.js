@@ -76,6 +76,13 @@ export async function openInBrowser({ path, text }) {
   window.open(URL.createObjectURL(new Blob([text], { type: 'text/html' })), '_blank');
 }
 
+/** Открывает страницу в браузере по умолчанию. Только https-адреса GitHub — для обновлений больше ничего не нужно. */
+export async function openUrl(url) {
+  if (!/^https:\/\/github\.com\//.test(url)) throw new Error(`Неожиданный адрес: ${url}`);
+  if (isDesktop) return invoke('open_path', { path: url });
+  window.open(url, '_blank', 'noopener');
+}
+
 export async function setWindowTitle(title) {
   document.title = title;
   if (isDesktop) await getCurrentWindow().setTitle(title);

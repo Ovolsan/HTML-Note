@@ -1,8 +1,9 @@
 /* Страница сохранённого документа: холст с листами, содержание слева, просмотр картинок. */
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+html { scroll-behavior: smooth; scroll-padding-top: 16px; }
 body.hn-page { margin: 0; background: #141518; color: #e6e6e9; font: 16px/1.65 'Segoe UI', Arial, sans-serif; }
-.hn-layout { display: grid; grid-template-columns: minmax(0, 1fr); justify-content: center; gap: 28px; padding: 40px 24px 80px; }
+/* Сверху отступа нет: лист стоит на том же расстоянии от края окна, что и в редакторе (его координата Y). */
+.hn-layout { display: grid; grid-template-columns: minmax(0, 1fr); justify-content: center; gap: 28px; padding: 0 24px 80px; }
 .hn-page.with-toc .hn-layout { grid-template-columns: 240px minmax(0, 1fr); }
 /* Холст: листы стоят по координатам. На узком экране (класс stacked ставит скрипт) — друг под другом. */
 main.hn-doc { min-width: 0; overflow-x: auto; }
@@ -10,17 +11,18 @@ main.hn-doc { min-width: 0; overflow-x: auto; }
 .hn-canvas > .hn-frame { box-shadow: 0 10px 30px #0006; }
 body.stacked .hn-canvas { width: auto !important; height: auto !important; display: flex; flex-direction: column; gap: 20px; }
 body.stacked .hn-canvas > .hn-frame { position: static; width: auto !important; max-width: 100%; height: auto !important; }
-.hn-toc { position: sticky; top: 24px; align-self: start; max-height: calc(100vh - 48px); overflow: auto; font-size: 14px; padding: 4px 0; }
-.hn-toc-title { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #5aa9ff; font-weight: 700; margin-bottom: 10px; }
+.hn-toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow: auto; font-size: 14px; padding: 12px 0; }
+/* Заголовок «Содержание» стоит в одной строке с кнопкой-значком, правее неё. */
+.hn-toc-title { display: flex; align-items: center; min-height: 32px; padding-left: 42px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #5aa9ff; font-weight: 700; margin-bottom: 10px; }
 .hn-toc a { display: block; color: #a9abb3; text-decoration: none; padding: 4px 8px; border-radius: 0; line-height: 1.35; }
 .hn-toc a:hover, .hn-toc a.active { color: #fff; background: #25272c; }
 .hn-toc a.l2 { padding-left: 20px; }
 .hn-toc a.l3 { padding-left: 32px; font-size: 13px; }
-.hn-toc-toggle { position: fixed; top: 10px; left: 10px; z-index: 20; background: #1f2024; color: #c9cad1; border: 1px solid #34363c; font: 13px/1 'Segoe UI', Arial, sans-serif; padding: 7px 12px; cursor: pointer; }
+.hn-toc-toggle { position: fixed; top: 12px; left: 24px; z-index: 20; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; background: #1f2024; color: #9a9ba3; border: 1px solid #34363c; cursor: pointer; }
+.hn-toc-toggle[aria-expanded="true"] { color: #5aa9ff; }
 .hn-toc-toggle:hover { color: #fff; border-color: #5aa9ff; }
 body.toc-hidden .hn-toc { display: none; }
 body.toc-hidden.with-toc .hn-layout { grid-template-columns: minmax(0, 1fr); }
-.hn-page.with-toc .hn-layout { padding-top: 52px; }
 .hn-lightbox { position: fixed; inset: 0; background: #07080aee; display: flex; align-items: center; justify-content: center; z-index: 50; cursor: zoom-out; }
 .hn-lightbox[hidden] { display: none; }
 .hn-lightbox img { max-width: 94vw; max-height: 90vh; border-radius: 0; box-shadow: 0 10px 40px #000; cursor: zoom-in; }
@@ -33,13 +35,14 @@ body.toc-hidden.with-toc .hn-layout { grid-template-columns: minmax(0, 1fr); }
 .hn-lightbox .hn-caption { position: fixed; bottom: 12px; left: 0; right: 0; text-align: center; color: #c9cad1; font-size: 13px; }
 @media (max-width: 900px) {
   .hn-page.with-toc .hn-layout { grid-template-columns: minmax(0, 1fr); }
-  .hn-toc { position: static; max-height: none; border-bottom: 1px solid #2b2d32; padding-bottom: 12px; }
+  .hn-toc-toggle { top: 16px; left: 10px; }
+  .hn-toc { position: static; max-height: none; border-bottom: 1px solid #2b2d32; padding: 0 0 12px; }
   .hn-frame[data-pad="xl"] { padding: 28px 20px !important; }
   .hn-layout { padding: 16px 10px 48px; }
 }
 @media print {
   body.hn-page { background: #fff; }
-  .hn-toc, .hn-lightbox { display: none !important; }
+  .hn-toc, .hn-toc-toggle, .hn-lightbox { display: none !important; }
   .hn-layout { display: block; padding: 0; }
   .hn-canvas > .hn-frame { box-shadow: none; }
 }

@@ -10,8 +10,15 @@ import { buildHtml, parseHtml, DEFAULT_SETTINGS } from './document.js';
 import { el, toolButton, toast, choiceDialog } from './ui.js';
 import * as platform from './platform.js';
 import { loadCustomEmoji, preloadEmojiPicker } from './emoji.js';
+import { getDefaults } from './defaults.js';
+import { setupTitlebar } from './titlebar.js';
+import { checkForUpdates, versionLabel, APP_VERSION } from './updater.js';
 
 document.head.append(el('style', {}, docCss));
+setupTitlebar(document.querySelector('.filebar'));
+// Пальцем или мышью: от этого зависят размер и видимость ручек листов и блоков.
+document.body.classList.toggle('hn-touch', matchMedia('(pointer: coarse)').matches);
+document.addEventListener('pointerdown', (e) => document.body.classList.toggle('hn-touch', e.pointerType === 'touch'), true);
 
 const state = { path: null, name: null, dirty: false, foreign: false, settings: { ...DEFAULT_SETTINGS } };
 const $ = (id) => document.getElementById(id);
@@ -48,6 +55,7 @@ fileTool('open', { iconName: 'FolderOpen', label: 'Открыть', short: 'От
 fileTool('save', { iconName: 'Save', label: 'Сохранить', short: 'Сохранить', shortcut: 'Ctrl+S', onClick: () => saveDocument() });
 fileTool('saveAs', { iconName: 'SaveAll', label: 'Сохранить как', short: 'Сохранить как', shortcut: 'Ctrl+Shift+S', onClick: () => saveDocument({ forceDialog: true }) });
 fileTool('browser', { iconName: 'Globe', label: 'Открыть в браузере', text: 'В браузере', onClick: () => openInBrowser() });
+fileTool('update', { iconName: 'RefreshCw', label: `Проверить обновления (версия ${versionLabel(APP_VERSION)})`, short: 'Обновления', onClick: () => checkForUpdates({ manual: true }) });
 
 refreshCtx = setupContextBar($('ctxbar'), editor, canvas);
 sidebar = setupSidebar($('sidebar'), editor, {
@@ -94,11 +102,12 @@ function applySettings() {
 function loadContent({ html, settings, name, path, foreign }) {
   suppressDirty = true;
   editor.commands.setContent(html || '', false);
-  // Новый документ или файл без листов: единственный лист ставим посередине видимой области.
+  // Новый документ или файл без листов: единственный лист ставим посередине видимой области,
+  // с запомненными рамкой и отступами.
   if (!/data-type="frame"/.test(html || '')) {
     const first = editor.state.doc.firstChild;
     const x = Math.max(0, Math.round((canvas.clientWidth - first.attrs.w) / 2 / 4) * 4);
-    editor.view.dispatch(editor.state.tr.setNodeMarkup(0, null, { ...first.attrs, x }).setMeta('addToHistory', false));
+    editor.view.dispatch(editor.state.tr.setNodeMarkup(0, null, { ...first.attrs, ...getDefaults('frame'), x }).setMeta('addToHistory', false));
   }
   suppressDirty = false;
   editor.commands.focus('start');
@@ -210,6 +219,8 @@ sheet.addEventListener('click', (e) => {
   } catch (e) {
     toast(`Не удалось открыть файл: ${e}`, 'error', 8000);
   }
+  // Проверка обновлений при запуске — не чаще раза в сутки, без шума при ошибке.
+  setTimeout(() => checkForUpdates(), 3000);
 })();
 
 window.hnEditor = editor;

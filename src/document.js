@@ -2,6 +2,7 @@
 import docCss from './styles/doc.css?raw';
 import pageCss from './export/page.css?raw';
 import viewerJs from './export/viewer.js?raw';
+import { videoPage } from './extensions.js';
 
 export const GENERATOR = 'HTML Note 0.1';
 export const DEFAULT_SETTINGS = { toc: true, width: 'normal' };
@@ -60,7 +61,7 @@ export function buildHtml({ html, settings, title }) {
   const content = `<div class="hn-canvas" style="width: ${canvasWidth + 40}px">${wrap.innerHTML}</div>`;
   const minLevel = Math.min(...toc.map((t) => t.level), 3);
   const tocHtml = settings.toc && toc.length
-    ? `<button class="hn-toc-toggle" type="button" aria-controls="hn-toc" aria-expanded="true">Скрыть содержание</button>
+    ? `<button class="hn-toc-toggle" type="button" aria-controls="hn-toc" aria-expanded="true" aria-label="Содержание" title="Содержание"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"/></svg></button>
 <nav class="hn-toc" id="hn-toc" aria-label="Содержание"><div class="hn-toc-title">Содержание</div>${toc
       .map((t) => `<a class="l${t.level - minLevel + 1}" href="#${t.id}">${escapeHtml(t.text)}</a>`).join('')}</nav>`
     : '';
@@ -138,6 +139,19 @@ export function parseHtml(text) {
       parts.push(p);
     }
     fig.replaceWith(...parts);
+  });
+  // Встроенные плееры YouTube/Vimeo (их вставляли прежние версии) становятся ссылкой на ролик.
+  [...root.querySelectorAll('div.hn-video.embed'), ...root.querySelectorAll('iframe')].forEach((el) => {
+    if (!el.isConnected) return;
+    const src = el.querySelector?.('.hn-video-link')?.getAttribute('href') || (el.matches('iframe') ? el : el.querySelector('iframe'))?.getAttribute('src') || '';
+    const site = videoPage(src);
+    if (!site) return;
+    const p = dom.createElement('p');
+    const a = dom.createElement('a');
+    a.href = site.page;
+    a.textContent = `Видео на ${site.site} ↗`;
+    p.append(a);
+    el.replaceWith(p);
   });
   return { html: root.innerHTML, settings, native, title: dom.title || '' };
 }

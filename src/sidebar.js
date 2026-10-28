@@ -1,7 +1,8 @@
 // Левая панель инструментов: содержание и блоки (вставка, вложенность, настройки).
 import { TextSelection } from '@tiptap/pm/state';
-import { el, icon } from './ui.js';
+import { el, icon, contextMenu, toast } from './ui.js';
 import { collectHeadings } from './document.js';
+import { getDefaults, setDefault, resetDefault } from './defaults.js';
 
 const PRESETS = [
   { label: 'Карточка', attrs: { bg: '#26282d', fg: null, border: 'line' } },
@@ -38,6 +39,19 @@ export function setupSidebar(container, editor, { getSettings, setSettings }) {
   const tocSwitch = el('input', { type: 'checkbox', class: 'switch', onChange: (e) => setSettings({ toc: e.target.checked }) });
   const collapse = el('button', { class: 'tbtn collapse', type: 'button', title: 'Свернуть панель', onClick: () => document.body.classList.toggle('sidebar-collapsed') }, icon('PanelLeft'));
   const blockBox = el('div', { class: 'block-settings' });
+  // Заголовок «Содержание» сворачивает раздел, как спойлер; выбор запоминается.
+  const FOLD_KEY = 'hn-toc-folded';
+  const setFolded = (folded) => {
+    tocTitle.classList.toggle('folded', folded);
+    tocTitle.setAttribute('aria-expanded', folded ? 'false' : 'true');
+    try { localStorage.setItem(FOLD_KEY, folded ? '1' : '0'); } catch { /* без запоминания */ }
+  };
+  const tocTitle = el('button', { class: 'side-title side-fold-title', type: 'button', title: 'Свернуть или развернуть содержание',
+    onMousedown: (e) => e.preventDefault(), onClick: () => setFolded(!tocTitle.classList.contains('folded')) },
+  icon('ChevronDown', 14), el('span', {}, 'Содержание'));
+  let folded = false;
+  try { folded = localStorage.getItem(FOLD_KEY) === '1'; } catch { /* по умолчанию развёрнуто */ }
+  setFolded(folded);
   const chain = () => editor.chain().focus();
   const keep = (e) => e.preventDefault();
   const sbtn = (label, onClick, title) => el('button', { class: 'sbtn', type: 'button', title: title || label, onMousedown: keep, onClick }, label);
@@ -61,20 +75,39 @@ export function setupSidebar(container, editor, { getSettings, setSettings }) {
     el('div', { class: 'layout-hint-title' }, 'Скрытые'),
     hiddenZone,
     el('div', { class: 'side-sep' }),
-    el('div', { class: 'side-title' }, 'Содержание'),
-    el('label', { class: 'side-row' }, tocSwitch, el('span', {}, 'Показывать содержание')),
-    el('div', { class: 'side-hint' }, 'Собирается из заголовков. В сохранённом файле его можно скрыть кнопкой.'),
-    tocList,
+    tocTitle,
+    el('div', { class: 'side-fold' },
+      el('label', { class: 'side-row' }, tocSwitch, el('span', {}, 'Показывать содержание')),
+      el('div', { class: 'side-hint' }, 'Собирается из заголовков. В сохранённом файле его можно скрыть кнопкой.'),
+      tocList),
     el('div', { class: 'side-sep' }),
     el('div', { class: 'side-title' }, 'Блоки'),
     el('div', { class: 'side-hint' }, 'Лист на холсте двигается за полоску сверху, размер — за края. Новый лист — двойной щелчок по пустому месту холста.'),
     el('div', { class: 'sbtn-row wrap' },
       sbtn('+ Лист на холсте', () => chain().insertFrame().run(), 'Новый лист справа от остальных; его можно передвинуть'),
-      sbtn('+ Блок', () => chain().insertBlock(PRESETS[0].attrs).run(), 'Вставить блок (можно внутрь другого блока)'),
-      sbtn('+ 2 колонки', () => chain().insertRow(2, PRESETS[0].attrs).run(), 'Два блока рядом'),
-      sbtn('+ 3 колонки', () => chain().insertRow(3, PRESETS[0].attrs).run(), 'Три блока рядом')),
+      sbtn('+ Блок', () => chain().insertBlock(newBlockAttrs()).run(), 'Вставить блок (можно внутрь другого блока)'),
+      sbtn('+ 2 колонки', () => chain().insertRow(2, newBlockAttrs()).run(), 'Два блока рядом'),
+      sbtn('+ 3 колонки', () => chain().insertRow(3, newBlockAttrs()).run(), 'Три блока рядом')),
     blockBox,
   );
+
+  const newBlockAttrs = () => ({ ...PRESETS[0].attrs, ...getDefaults('block') });
+
+  // ПКМ по настройке «Рамка» или «Отступы внутри»: запомнить значение для новых листов (или блоков).
+  const FIELD_NAMES = { border: 'рамку', pad: 'отступы' };
+  const LABELS = { border: { none: 'нет', line: 'линия', accent: 'акцент' }, pad: { none: '0', s: 'S', m: 'M', l: 'L', xl: 'XL' } };
+  function rememberMenu(e, b, field) {
+    const kind = b.frame ? 'frame' : 'block';
+    const whom = b.frame ? 'новых листов' : 'новых блоков';
+    const items = [{ label: 'Запомнить по умолчанию', onClick: () => {
+      setDefault(kind, { [field]: b.node.attrs[field] });
+      toast(`Для ${whom} ${FIELD_NAMES[field]}: ${LABELS[field][b.node.attrs[field]]}.`);
+    } }];
+    if (getDefaults(kind)[field] != null) {
+      items.push({ label: 'Сбросить по умолчанию', onClick: () => { resetDefault(kind, field); toast(`Для ${whom} ${FIELD_NAMES[field]} — как было изначально.`); } });
+    }
+    contextMenu(e, items);
+  }
 
   function update(target, patch) {
     editor.view.dispatch(editor.state.tr.setNodeMarkup(target.pos, null, { ...target.node.attrs, ...patch }));
@@ -130,10 +163,12 @@ export function setupSidebar(container, editor, { getSettings, setSettings }) {
       swatches(BG, a.bg, (c) => update(b, { bg: c })),
       el('div', { class: 'field-label' }, 'Цвет текста'),
       swatches(FG, a.fg, (c) => update(b, { fg: c })),
-      el('div', { class: 'field-label' }, 'Рамка'),
-      choice([['none', 'Нет'], ['line', 'Линия'], ['accent', 'Акцент']], a.border, (v) => update(b, { border: v })),
-      el('div', { class: 'field-label' }, 'Отступы внутри'),
-      choice([['none', '0'], ['s', 'S'], ['m', 'M'], ['l', 'L'], ['xl', 'XL']], a.pad, (v) => update(b, { pad: v })),
+      el('div', { class: 'remember', title: 'ПКМ — запомнить по умолчанию', onContextmenu: (e) => rememberMenu(e, b, 'border') },
+        el('div', { class: 'field-label' }, 'Рамка'),
+        choice([['none', 'Нет'], ['line', 'Линия'], ['accent', 'Акцент']], a.border, (v) => update(b, { border: v }))),
+      el('div', { class: 'remember', title: 'ПКМ — запомнить по умолчанию', onContextmenu: (e) => rememberMenu(e, b, 'pad') },
+        el('div', { class: 'field-label' }, 'Отступы внутри'),
+        choice([['none', '0'], ['s', 'S'], ['m', 'M'], ['l', 'L'], ['xl', 'XL']], a.pad, (v) => update(b, { pad: v }))),
       el('div', { class: 'field-label' }, 'Высота'),
       el('label', { class: 'side-row' },
         el('input', { type: 'checkbox', class: 'switch', checked: infinite, onChange: (e) => update(b, { height: e.target.checked ? null : Number(heightInput.value) || 300 }) }),
